@@ -1,0 +1,25 @@
+filebeat.modules:
+  - module: system
+    syslog:
+      enabled: true
+  - module: system
+    auth:
+      enabled: true
+
+filebeat.inputs:
+  - type: filestream
+    enabled: true
+    id: my-filestream-id
+    paths:
+      - /var/log/messages
+      - /var/log/*.log
+
+output.elasticsearch:
+  hosts: "http://elasticsearch:9200"
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+setup.ilm.overwrite: true
+setup.dashboards.enabled: true
+setup.dashboards.directory: "/usr/share/filebeat/kibana"
