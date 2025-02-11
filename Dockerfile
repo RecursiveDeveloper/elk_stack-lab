@@ -7,6 +7,5 @@ RUN npm init --yes && npm pkg set type="module" && \
     npm install --save-dev typescript @types/node
 
 COPY ./apollo-server/ ./
-COPY ./elk-config/filebeat/ /opt/filebeat_resources
 
 CMD [ "npm", "start" ]

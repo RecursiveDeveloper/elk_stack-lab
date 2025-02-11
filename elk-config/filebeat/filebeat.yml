@@ -1,18 +1,14 @@
-filebeat.modules:
-  - module: system
-    syslog:
-      enabled: true
-  - module: system
-    auth:
-      enabled: true
-
-filebeat.inputs:
-  - type: filestream
-    enabled: true
-    id: my-filestream-id
-    paths:
-      - /var/log/messages
-      - /var/log/*.log
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      templates:
+        - condition:
+            contains:
+              docker.container.image: apolloserver
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
 
 output.elasticsearch:
   hosts: "http://elasticsearch:9200"
