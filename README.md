@@ -19,7 +19,10 @@ docker compose down --rmi all --remove-orphans -v
 docker-compose restart metricbeat
 ```
 2. Metricbeat funcional, se agregan healthchecks necesarios para esperar a los servicios de elasticsearch y kibana
-3. Filebeat se instala dentro del contenedor Apollo Server una vez el stack ELK esté arriba: 
+3. Filebeat se instala dentro del contenedor Apollo Server una vez el stack ELK esté arriba, esto por medio del script de instalación almacenado en la ruta /opt/filebeat_resources/: 
+```
+docker exec apolloserver bash /opt/filebeat_resources/install.sh
+```
     1. ingresar al contenedor: ```docker exec -it apolloserver bash```
     2. navegar a la ruta: ```cd /opt/filebeat_resources/```
     3. ejecutar el script: ```bash install.sh```
