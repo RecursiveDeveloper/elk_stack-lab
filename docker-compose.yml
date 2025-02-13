@@ -96,6 +96,22 @@ services:
       kibana:
         condition: service_healthy
 
+  apm-server:
+    image: elastic/apm-server:7.9.1
+    container_name: apm-server
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./elk-config/apm-server/apm-server.yml:/usr/share/apm-server/apm-server.yml
+    networks:
+      - elk
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    command: ["sh", "-c", "apm-server -e --strict.perms=false"]
+
 networks:
   elk:
     name: elk

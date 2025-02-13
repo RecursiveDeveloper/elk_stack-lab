@@ -1,3 +1,4 @@
+import './apm.js'; // Importar APM antes de cualquier otro código
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 
