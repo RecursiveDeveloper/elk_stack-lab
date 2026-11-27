@@ -1,17 +1,67 @@
 services:
+
+  # ── Apollo GraphQL server ─────────────────────────────────────────────────────
   apolloserver:
     container_name: apolloserver
     image: apolloserver
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     ports:
       - "3000:4000"
+    environment:
+      NODE_ENV: development
+      APM_SERVICE_NAME: apollo-server
+      APM_SERVER_URL: http://apm-server:8200
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: lab
+      PGUSER: lab
+      PGPASSWORD: lab
+      LOG_LEVEL: info
     networks:
       - elk
+    depends_on:
+      postgres:
+        condition: service_healthy
+      apm-server:
+        condition: service_started
 
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: lab
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - elk
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d lab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── k6 load generator ─────────────────────────────────────────────────────────
+  k6:
+    image: grafana/k6:0.57.0
+    container_name: k6
+    volumes:
+      - ./load-generator:/scripts
+    command: ["run", "/scripts/script.js"]
+    networks:
+      - elk
+    depends_on:
+      - apolloserver
+
+  # ── Elasticsearch ─────────────────────────────────────────────────────────────
   elasticsearch:
-    image: elasticsearch:7.9.1
+    image: elasticsearch:7.17.19
     container_name: elasticsearch
     ports:
       - "9200:9200"
@@ -35,8 +85,9 @@ services:
       timeout: 30s
       retries: 10
 
+  # ── Kibana ────────────────────────────────────────────────────────────────────
   kibana:
-    image: kibana:7.9.1
+    image: kibana:7.17.19
     container_name: kibana
     ports:
       - "5601:5601"
@@ -49,14 +100,14 @@ services:
       elasticsearch:
         condition: service_healthy
     healthcheck:
-      test:
-        [ "CMD-SHELL", "curl -s -I http://kibana:5601 | grep -q 'HTTP/1.1 302 Found'"]
+      test: ["CMD-SHELL", "curl -s -I http://kibana:5601 | grep -q 'HTTP/1.1 302 Found'"]
       interval: 40s
       timeout: 10s
       retries: 120
 
+  # ── Metricbeat ────────────────────────────────────────────────────────────────
   metricbeat:
-    image: docker.elastic.co/beats/metricbeat:7.9.1
+    image: docker.elastic.co/beats/metricbeat:7.17.19
     container_name: metricbeat
     user: root
     volumes:
@@ -77,8 +128,9 @@ services:
     restart: on-failure
     command: ["sh", "-c", "metricbeat -e --strict.perms=false"]
 
+  # ── Filebeat ──────────────────────────────────────────────────────────────────
   filebeat:
-    image: elastic/filebeat:7.9.1
+    image: elastic/filebeat:7.17.19
     container_name: filebeat
     user: root
     command: ["filebeat", "-e", "--strict.perms=false"]
@@ -96,8 +148,9 @@ services:
       kibana:
         condition: service_healthy
 
+  # ── APM Server ────────────────────────────────────────────────────────────────
   apm-server:
-    image: elastic/apm-server:7.9.1
+    image: elastic/apm-server:7.17.19
     container_name: apm-server
     ports:
       - "8200:8200"
@@ -120,3 +173,4 @@ networks:
 volumes:
   test_data:
   kb_data:
+  pg_data:

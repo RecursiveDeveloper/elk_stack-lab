@@ -1,9 +1,9 @@
 import apm from 'elastic-apm-node';
 
 apm.start({
-  serviceName: 'apollo-server',
-  serverUrl: 'http://apm-server:8200',
-  environment: 'development',
+  serviceName: process.env.APM_SERVICE_NAME ?? 'apollo-server',
+  serverUrl: process.env.APM_SERVER_URL ?? 'http://apm-server:8200',
+  environment: process.env.NODE_ENV ?? 'development',
   logLevel: 'info',
 });
 
